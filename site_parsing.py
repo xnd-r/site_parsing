@@ -7,6 +7,7 @@ chained     = []
 unchained   = []
 external    = []
 broken      = []
+clusters    = dict() 
 
 def search_docs(): #returns full list of docs
     directory = os.getcwd()+ '/ipp_manual'
@@ -19,7 +20,7 @@ def get_links(file):
     if os.path.exists(file_path) and os.path.isfile(file_path):
         with open(file, 'r', encoding='utf-8') as f:
             content = f.read()
-            reg = re.findall(r'(?<=href\=").+?(?=#)|(?<=href\=").+?(?=")', content)     
+            reg     = re.findall('(?<=href\=").+?(?=#)|(?<=href\=").+?(?=")', content)             
             for i in reg:
                 if i.startswith('http'):
                     if i not in external:
@@ -29,28 +30,26 @@ def get_links(file):
                     if i in docs_array and i not in chained:
                         chained.append(i)
                         get_links(i)
-                    if i not in docs_array and i not in broken:
-                        broken.append(i)
-                        get_links(i) 
-                else:
-                    pass
+                    if i not in docs_array:
+                        tmp = re.findall('GUID-\w+[-]\w+[-]\w+[-]\w+[-]\w.?\w+', i)
+                        if len(tmp) != 0:
+                            for j in tmp:
+                                if j not in broken:
+                                    broken.append(j)
+                                get_links(j)
+                    else:
+                        pass
+            #unchained = [i, set(docs_array) - set(chained)]
+            #if dict(unchained) not in clasters:
+                #clasters[i] = unchained
+
     else:
         pass
         return
 
-
-if __name__ == '__main__':
-
-    t1 = time.time()
-    docs_array = search_docs()
-    os.chdir("ipp_manual")
-    get_links(start_doc)
-    unchained = set(docs_array) - set(chained)
-    t2 = time.time()
-
-    time = t2 - t1
+def write_log():
     today = datetime.datetime.today()
-    dt = today.strftime("%Y-%m-%d-%H-%M")
+    dt = today.strftime("%Y-%m-%d-%H-%M-%S")
     os.chdir("..")
     os.mkdir(dt)
     os.chdir(dt)
@@ -85,7 +84,7 @@ if __name__ == '__main__':
     f = open("broken.log", 'a')
     f.write("amount of broken links: " + str(len(broken)) + "\n")
     for i in broken:
-        f.write(i + "\n")
+        f.write(str(i) + "\n")
     f.close()
     
     f = open("external.log", 'a')
@@ -93,4 +92,21 @@ if __name__ == '__main__':
     for i in external:
         f.write(i + "\n")
     f.close()
+
+
+
+if __name__ == '__main__':
+    t1 = time.time()
+    docs_array = search_docs()
+    os.chdir("ipp_manual")
+    get_links(start_doc)
+    unchained = set(docs_array) - set(chained)
+    t2 = time.time()
+    time = t2 - t1
+    #clusters[0] = unchained;   
+    #for i in clusters:
+        #print(str(len(clusters[i])) + "\n")
+    write_log()
+
+
    
